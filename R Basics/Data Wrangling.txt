@@ -1,0 +1,119 @@
+install.packages("dslabs")
+library(dplyr); library(dslabs)
+
+data("murders"); dta = murders; head(dta)
+attach(dta)
+
+
+
+# Indexing ----------------------------------------------------------------
+
+## index with logical operators
+murder_rate = total / population * 100000 # en pourcentage
+index = murder_rate <= 0.71 # index devient un vecteur donnant pour chaque observation Vrai ou Faux a la condition
+
+state[index==T] # revoie l'état correspondant pour chaque donnée ayant un taux <= 0.71
+sum(index==T); sum(index) # nombre d'observations remplissant la condition
+
+west = region == "West"
+safe = murder_rate <= 1
+
+index2 = safe & west
+state[index2]
+
+## which()
+indexm = which(state == "Massachusetts"); indexm #indice correspondant a la condition
+murder_rate[indexm]
+
+## match() = multiple which
+indexes = match(c("Texas", "Florida"), state); indexes # attribut les indices des données des états spécifiés
+murder_rate[indexes]
+
+## %in% operator
+x = c(1,2,3,4,5)
+y = c(1,2,8)
+
+y %in% x # pour chaque élément de y renvoie s'il est ou non contenu dans x
+
+c("Boston", "Dakota", "Washington") %in% state # boston et dakota ne sont pas des états
+
+
+
+# Basic Data Wrangling ----------------------------------------------------
+
+## mutate() = add a column
+murders = mutate(murders, rate = murder_rate) # add the rate column to murders
+dta = murders; attach(dta)
+
+## filter()
+dta = filter(dta, rate < 0.7) # keep only the data that fill the conditions
+
+## select() = data.frame()
+dta = select(dta, state, region, rate) 
+dta = data.frame(state, region, rate)
+
+## pipe operator %>% = mutate then select then filter
+data("murders"); dta = murders
+dta %>% mutate(rate = murder_rate) %>% select(state, region, rate) %>% filter(rate <= 0.71)
+## l'argument a gauche du pipe devient par défaut le premier argument des fonctions ensuite utilisées
+16 %>% sqrt()
+## le résultat sera l'argument de la fonction suivante
+9 %>% sqrt() %>% factorial() # = factorial(sqrt(9))
+
+## creating a data frame with stringAsFactors = FALSE
+grades <- data.frame(names = c("John", "Juan", "Jean", "Yao"), exam_1 = c(95, 80, 90, 85), exam_2 = c(90, 85, 85, 90), stringsAsFactors = F)
+grades
+
+  
+
+
+# Basic plots -------------------------------------------------------------
+data("murders"); dta = murders; attach(dta); murder_rate = total / population * 100000; dta = mutate(murders, rate = murder_rate); attach(dta)
+
+##
+pop = population/10^6
+kills = total
+plot(kills ~ pop)
+hist(rate)
+boxplot(rate~region)
+
+
+
+# Exercices ---------------------------------------------------------------
+data("heights"); taille = heights; attach(taille)
+options(digits = 3) ## tous les résultats en trois chiffres
+summary(taille)
+
+avg = mean(height); avg
+sum(height > avg)
+
+cond = height > avg & sex == "Female"
+sum(cond)
+
+women = mean(sex=="Female"); women
+
+min = min(height); min
+ind = match(min, height); ind; height[1032]
+sex[ind]
+
+max = max(height); max
+x = min:max; x
+length(x)
+
+x %in% height
+sum(!(x %in% height))
+
+taille = mutate(taille, cm = height*2.54); attach(taille)
+cm[18]
+mean(cm)
+sum(sex=="Female")
+
+girls = filter(taille, sex=="Female")
+mean(girls$cm)
+
+data("olive"); fat = olive; attach(olive)
+plot(palmitic~palmitoleic)
+
+hist(eicosenoic)
+
+boxplot(palmitic~region)

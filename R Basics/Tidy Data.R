@@ -1,0 +1,212 @@
+rm(list=ls())
+
+# What is Tidy data -------------------------------------------------------
+
+## Data frames greatly facilitate the organization of information.
+## We will focus on a specific data format referred to as tidy and 
+## on specific collection of packages that are particularly helpful 
+## for working with tidy data referred to as the tidyverse.
+library(tidyverse)
+## tidyverse contient plusieurs packages dont dplyr
+tidyverse_packages()
+
+
+## We say that a data table is in tidy format if each row represents one observation and columns represent 
+## the different variables available for each of these observations. The murders dataset is an example of a tidy data frame.
+library(dslabs); data("murders")
+head(murders)
+## Each row represent a state with each of the five columns providing a different variable related 
+## to these states: name, abbreviation, region, population, and total murders
+
+#>       country 1960 1961 1962
+#> 1     Germany 2.41 2.44 2.47
+#> 2 South Korea 6.16 5.99 5.79
+"this is not tidy because each row contains differrent informations
+ the year is a variable, here it is stored in the header
+ For the tidyverse packages to be optimally used, data need to be reshaped into tidy format
+ ->>>> Data Wrangling part"
+#>       country year fertility
+#> 1     Germany 1960      2.41
+#> 2 South Korea 1960      6.16
+#> 3     Germany 1961      2.44
+#> 4 South Korea 1961      5.99
+#> 5     Germany 1962      2.47
+#> 6 South Korea 1962      5.79
+
+
+
+
+# Summarizing data --------------------------------------------------------
+
+## summarize() // same as summarise ==> both spelling work
+library(dslabs)
+data("heights"); heights = heights; attach(heights)
+summarize(heights, avg = mean(height), stdev = sd(height))
+
+# advanced tips in the Do() section
+
+s = heights %>% filter(sex=="Female") %>% summarize(avg=mean(height), stdev=sd(height)); s # summarise for women only
+# as we can see in the environement tab, s is a data frame (it's a table)
+# we can access its components
+s$avg
+
+
+data("murders"); murders = murders
+murders = murders %>% mutate(rate = total/population*100000); attach(murders)
+usrate = murders %>% summarize(rate = sum(total)/sum(population)*10^5); usrate # us murder rate as a data frame
+
+## pull() - récupérer les valeurs d'une colonne 
+class(usrate)
+a = pull(usrate, rate); a; class(a) ## devient un nombre
+b = pull(murders, population); b # devient un vecteur
+# - inutile pour l'instant car
+b == murders$population # TRUE
+
+## group_by()
+grheights = group_by(heights, sex); grheights # grouped data frame !
+# les données sont les meme mais seront traitées différemment par certaines fonctions de dplyr
+summarize(grheights, mean = mean(height))
+
+murders %>% group_by(region) %>% summarise(mean=mean(rate))
+
+
+
+
+# Sorting data ------------------------------------------------------------
+
+## sort() and order() and rank()
+data("murders"); attach(murders)
+total
+sort(total, decreasing = F) # tri croissant du vecteur 
+
+order(total, decreasing = F) # renvoie les indices dans l'ordre croissant
+# -> verification
+min(total) == total[46] # TRUE
+
+rank(total) # renvoie le rang <=> classement de 1 en 1 des valeurs, fraction si meme valeurs (rang 2.5 si deux meme valeurs au rang 2)
+
+## arrange() - sort entire table (matrix)
+arrange(murders, population)
+arrange(murders, desc(population)) # decroissant
+## s'il y a des groupes on peut trier plusieurs fois
+murders %>% mutate(rate = total/population*10^5) %>% arrange(region, rate) %>% head(15) # tri par region et par taux de meurtre au sein de chaque groupe
+## sort a grouped data frame
+data("heights"); attach(heights)
+heights %>% group_by(sex) %>% arrange(height, .by_group=T)
+
+## top_n() # filter by and show n top rows
+top_n(murders, 7, population) # show top 7 cities ordered by population
+
+
+
+
+# Tibbles -----------------------------------------------------------------
+
+## we can see that after the use of group_by() we don't have a table with columns and there's written A Tibble : dimxdim
+g = heights %>% group_by(sex); g
+class(g)
+# this grouped data frame is a kind of tibble
+# summarize() also returns a tibble
+# other functions like filter() select() arrange() etc. are different, 
+# if they receive a regular data frame they return a regular data frame, 
+# if they receive a tibble they return a tibble
+
+## The print method for tibbles is more readable than that of a data frame
+murders
+as_tibble(murders) # conversion data frame to tibble  
+# it adjusts to the console window size
+# If you subset the columns of a data frame, you may get back an object that is not a data frame, such as a vector or scalar
+a = murders[5,4]; a; class(a)
+b = murders[,4]; b; class(b)
+# With tibbles this does not happen, it returns a tibble
+a = as_tibble(murders[5,4]); a; class(a)
+b = as_tibble(murders[,4]); b; class(b)
+# This is useful in the tidyverse since functions require data frames as input
+# However it is still possible to get a vector or a scalar
+a = as_tibble(murders)$population; a; class(a)
+b = as_tibble(murders)$population[12]; b; class(b)
+
+## A related feature is that tibbles will give you a warning if you try to access a column that does not exist
+murders$Population # no warning = harder to debug
+as_tibble(murders)$Population # warning
+
+## While data frame columns need to be vectors of numbers, strings, or logical values, tibbles can have more complex objects, such as lists or functions
+tibble(id = c(1, 2, 3), func = c(mean, median, sd))
+
+## As already mentionned with the grouped tibbles,The tidyverse functions are aware of the group information (like summarize())
+
+## Create a tibble
+grades <- tibble(names = c("John", "Juan", "Jean", "Yao"), exam_1 = c(95, 80, 90, 85), exam_2 = c(90, 85, 85, 90))
+class(grades$names)
+# the data.drame() has the default to convert strings to factors without warning it
+grades <- data.frame(names = c("John", "Juan", "Jean", "Yao"), exam_1 = c(95, 80, 90, 85), exam_2 = c(90, 85, 85, 90))
+class(grades$names)
+# in this case we have to specify it to get characters
+grades <- data.frame(names = c("John", "Juan", "Jean", "Yao"), exam_1 = c(95, 80, 90, 85), exam_2 = c(90, 85, 85, 90), stringsAsFactors = F)
+class(grades$names)
+
+
+
+
+# Do() --------------------------------------------------------
+
+## Most R functions do not recognize grouped tibbles nor do they return data frames
+## The do() function is a bridge between R functions such as quantile and the tidyverse
+## The do function understands grouped tibbles and always returns a data frame
+
+## if we attempt to use quantile to obtain the min, median and max in one call, we will receive an error
+library(dslabs); data("heights"); attach(heights)
+heights %>% filter(sex == "Female") %>% summarize(range = quantile(height, c(0, 0.5, 1)))
+
+## fix this
+my_summary = function(data, vector)
+{
+  attach(data)
+  x = quantile(vector, c(0, 0.5, 1))
+  tibble(min = x[1], median = x[2], max = x[3])
+}
+# this function returns a tibble of these three quantiles
+heights %>% group_by(sex) %>% my_summary(height)
+# issue : my_summary() isn't part of the tidyverse and thus doesn't know about grouped data frames
+
+## do() allows us to handle grouped data frames
+heights %>% group_by(sex) %>% do(my_summary(.)) ##### syntax is important (.)
+
+
+
+
+# Purr package ------------------------------------------------------------
+
+## while sapply() can return different types of objects, map() will always return a list
+library(purrr)
+n = 1:25 
+sum1 = function(n) {x = 1:n; sum(x)}
+map(n, sum1)
+## furthermore we can have more control on it
+map_dbl(n, sum1) # vector
+## to get a tibble
+sum2 = function(n) {x = 1:n; tibble(sum = sum(x))}
+map_df(n, sum2)
+
+
+
+# Tidyverse conditionals --------------------------------------------------
+
+## case_when()
+library(dplyr); library(dslabs)
+x = runif(10, -50, 50)
+case_when(x < 0 ~ "Negative", x > 0 ~ "Positive", TRUE ~ "Zero") # TRUE means else
+
+## example we want to compare murder rates by group
+data("murders"); attach(murders)
+murders = murders %>% mutate(group = case_when(region == "South" ~ "South",
+                                              abb %in% c("ME", "NH", "VT", "MA", "RI", "CT") ~ "New England",
+                                              abb %in% c("WA", "OR", "CA") ~ "West Coast",
+                                              TRUE ~ "Other"))
+attach(murders)
+murders %>% group_by(group) %>% summarise(rate = sum(total) / sum(population) * 10^5)
+
+
+## between() - is x between a and b ?
+a = 0; b = 10; x = runif(10, 0, 10)
+between(x, a, b)

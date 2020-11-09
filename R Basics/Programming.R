@@ -1,0 +1,107 @@
+rm(list=ls())
+library(dslabs)
+
+## rm / remove is used to remove objects
+a = 2; ls()
+rm(a); ls()
+## as ls() lists all objects in the environment, removing it will clear the environment
+rm(list = ls())
+
+# Basic Conditionnals -----------------------------------------------------
+
+## if else
+a = 2
+if(a != 0) {print(1/a)} else {print("Pas d'inverse, a=0")}
+
+data("murders"); murd = murders; attach(murd)
+rate = total/population*10^5 
+
+ind = which.min(rate) # indice de l'état avec le taux le plus faible
+if(rate[ind]<0.5) {print(state[ind])} else {print("no rate under 0.5%")}
+
+## ifelse() = fast if else
+b = 0
+ifelse(b>0, 1/b, NA)
+
+## ifelse() works with vectors = ifelse for all datas
+c = c(0,1,2,-4,5)
+result = ifelse(c>0, 1/c, NA)
+result
+
+## ifelse() sur des données
+data("na_example"); naex = na_example #data is a vector
+sum(is.na(naex)) # 145 valeurs NA
+
+no_nas = ifelse(is.na(naex), 0, naex) # remplacer les NA par 0 
+sum(is.na(no_nas))
+
+## the any() and all() functions evaluate logical vectors
+z <- c(3,4,5)
+any(z==3)
+all(z==3)
+
+
+# Functions ---------------------------------------------------------------
+## moyenne arithmetique ou geometrique (capitalisation)
+avg = function(x, arithmetic = T)
+{
+  n = length(x)
+  ifelse(arithmetic, sum(x)/n, prod(x)^(1/n)-1)
+}
+sample = runif(100, min=0, max=1000); avg(sample)
+returns = 1 + rnorm(20, 0, 0.2); avg(returns, arithmetic = FALSE)
+
+
+
+
+# For Loops ---------------------------------------------------------------
+
+## Exemple : somme d'une suite arithmétique
+somme = function(n)
+{
+  x = 1:n
+  sum(x)
+}
+
+m = 25
+vec = vector(length = m)
+for (i in 1:m)
+{
+  vec[i] = somme(i)
+}
+vec
+
+j = 1:25
+plot(vec~j, main="Summations")
+
+lines(j, j*(j+1)/2) # comparaison avec la formule de la somme
+
+
+
+# Other functions ---------------------------------------------------------
+
+## sapply()
+k = 1:10
+sapply(k, somme) # apply the function somme to the vector k
+
+
+
+
+# Packages functions ------------------------------------------------------
+
+## Different packages may have identical functions or different but with the same name
+detach(package:stats); detach(package:dplyr) # disable packages
+library(stats)
+library(dplyr)
+## on remarque que stats avait deja deux fonctions nommées filter et lag, elles en sont masquées
+## on utilise les fonctions du dernier package activé ET il faut detacher le package avant de le réactiver pour acceder a ses fonctions homonymes
+
+## search() - donne l'ordre de recherche des fonctions
+search() # dplyr est bien avant stats
+
+## Alternative - forcer l'utilisation d'une fonction
+stats::filter
+dplyr::filter
+
+## Le :: sert aussi a utiliser une fontion de n'importe quel package - sans avoir besoin de l'activer
+fBasics::basicStats
